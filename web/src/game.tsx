@@ -202,6 +202,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const applyBlock = useCallback(
         (data: Blocked, current: Snapshot) => {
+            if (explainBlock(data.reason) === data.reason) {
+                return;
+            }
             const name = current.npcs.find((n) => n.account === data.npc)?.name ?? "A trader";
             const item: BlockItem = {
                 id: nextId(),

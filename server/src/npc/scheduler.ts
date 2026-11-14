@@ -1,6 +1,7 @@
 import type { Config } from "../config.js";
 import { panicReason } from "../chain/events.js";
-import { isNetworkError } from "../chain/retry.js";
+import { isRetryable } from "../chain/retry.js";
+import { isPolicyRefusal } from "../security/reasons.js";
 import type { EventHub } from "../events/hub.js";
 import type { Store } from "../game/store.js";
 import type {
@@ -99,7 +100,7 @@ export class Scheduler {
                 return true;
             } catch (error) {
                 const reason = panicReason(error);
-                if (isNetworkError(error)) {
+                if (isRetryable(error)) {
                     log(`${signer.split(".")[0]} ${method} skipped: network hiccup`);
                     return false;
                 }
@@ -113,7 +114,7 @@ export class Scheduler {
                     return false;
                 }
                 log(`${signer} ${method} blocked: ${reason}`);
-                if (owner) {
+                if (owner && isPolicyRefusal(reason)) {
                     hub.publishPrivate(owner, "npc_blocked", { npc: signer, method, reason });
                 }
                 return false;

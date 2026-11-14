@@ -34,6 +34,15 @@ export function isNetworkError(error: unknown): boolean {
     return error instanceof TypeError && /fetch failed/i.test(error.message);
 }
 
+export function isRateLimit(error: unknown): boolean {
+    const text = error instanceof Error ? error.message : String(error);
+    return /rate limits? exceeded|"code":\s*-?429|\b429\b/i.test(text);
+}
+
+export function isRetryable(error: unknown): boolean {
+    return isNetworkError(error) || isRateLimit(error);
+}
+
 export interface RetryOptions {
     attempts?: number;
     delayMs?: number;

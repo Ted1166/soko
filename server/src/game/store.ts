@@ -9,6 +9,7 @@ export interface SystemAccounts {
 
 interface Saved {
     sessions: Record<string, string>;
+    sessionTimes?: Record<string, number>;
     npcs: Record<string, { archetype: string }>;
     system: SystemAccounts | null;
 }
@@ -23,6 +24,7 @@ export class Store {
         this.state = existsSync(this.file)
             ? JSON.parse(readFileSync(this.file, "utf8"))
             : { sessions: {}, npcs: {}, system: null };
+        this.state.sessionTimes ??= {};
     }
 
     private save(): void {
@@ -33,9 +35,15 @@ export class Store {
         return this.state.sessions[token];
     }
 
-    addSession(token: string, owner: string): void {
+    addSession(token: string, owner: string, now: number = Date.now()): void {
         this.state.sessions[token] = owner;
+        (this.state.sessionTimes ??= {})[token] = now;
         this.save();
+    }
+
+    recentSessionCount(windowMs: number, now: number = Date.now()): number {
+        const times = Object.values(this.state.sessionTimes ?? {});
+        return times.filter((at) => at > now - windowMs).length;
     }
 
     sessionCount(): number {

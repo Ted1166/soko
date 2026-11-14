@@ -5,6 +5,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { panicReason } from "../chain/events.js";
 import { tradesLeft } from "../chain/gas.js";
+import { friendlyError, isFundShort } from "./friendly.js";
 import type { NearChain } from "../chain/near.js";
 import type { Config } from "../config.js";
 import type { EventHub } from "../events/hub.js";
@@ -122,12 +123,22 @@ export function createApi(deps: ApiDeps): express.Express {
     });
 
     app.post("/api/session", async (req, res) => {
-        if (store.sessionCount() >= config.sessionLimit) {
-            res.status(429).json({ error: "The market is full right now. Try again later." });
+        if (store.recentSessionCount(24 * 60 * 60 * 1000) >= config.sessionLimit) {
+            res.status(429).json({ error: "The market is full for today. Please try again later." });
             return;
         }
         const stallName = cleanName(req.body?.name, "Mama Mboga", 32);
-        const owner = await chain.createFundedAccount("p", config.playerFundingNear);
+        let owner: string;
+        try {
+            owner = await chain.createFundedAccount("p", config.playerFundingNear);
+        } catch (error) {
+            const text = panicReason(error);
+            if (isFundShort(text)) {
+                console.error(`[soko] guest fund is low: ${text}`);
+                throw new Error("The town's guest fund is low right now. Please try again later.");
+            }
+            throw error;
+        }
         hub.publishChain(await chain.call(owner, "open_stall", { name: stallName }));
         const token = randomUUID();
         store.addSession(token, owner);
@@ -273,7 +284,7 @@ export function createApi(deps: ApiDeps): express.Express {
     });
 
     app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-        res.status(400).json({ error: panicReason(error) });
+        res.status(400).json({ error: friendlyError(panicReason(error)) });
     });
 
     return app;

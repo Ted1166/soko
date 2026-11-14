@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isConnectError, isNetworkError, withRetry } from "../src/chain/retry.js";
+import { isConnectError, isNetworkError, isRateLimit, isRetryable, withRetry } from "../src/chain/retry.js";
 
 function connectTimeout(): Error {
     const error = new TypeError("fetch failed");
@@ -25,6 +25,16 @@ describe("retry", () => {
         (reset as Error & { cause?: unknown }).cause = { code: "ECONNRESET" };
         expect(isNetworkError(reset)).toBe(true);
         expect(isConnectError(reset)).toBe(false);
+    });
+
+    it("recognises a rate limit from the public RPC", () => {
+        const limited = new Error(
+            'Rate limits exceeded. {"jsonrpc": "2.0", "error": {"code": -429, "message": "Rate limits exceeded. For higher rate limits get a subscription at https://fastnear.com"}, "id": "1"}',
+        );
+        expect(isRateLimit(limited)).toBe(true);
+        expect(isRetryable(limited)).toBe(true);
+        expect(isRateLimit(new Error("Smart contract panicked: Daily cap reached"))).toBe(false);
+        expect(isRetryable(new Error("Smart contract panicked: Daily cap reached"))).toBe(false);
     });
 
     it("retries until the task succeeds", async () => {

@@ -162,3 +162,30 @@ describe("GameProvider ownership", () => {
         );
     });
 });
+
+describe("GameProvider blocked events", () => {
+    it("ignores infrastructure errors instead of listing them as stopped by a limit", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => new Response(JSON.stringify(snapshot), { status: 200 })),
+        );
+        render(
+            <GameProvider>
+                <Probe />
+            </GameProvider>,
+        );
+        await waitFor(() => expect(screen.getByTestId("loaded").textContent).toBe("yes"));
+
+        act(() => {
+            FakeSource.current?.emit("npc_blocked", {
+                npc: NPC,
+                method: "buy_goods",
+                reason: '{"jsonrpc": "2.0", "error": {"code": -429, "message": "Rate limits exceeded"}, "id": "1"}',
+            });
+            FakeSource.current?.emit("npc_blocked", { npc: NPC, method: "buy_goods", reason: "Daily cap reached" });
+        });
+
+        expect(await screen.findByText("Juma hit today's spending limit")).toBeTruthy();
+        expect(screen.queryByText(/Rate limits exceeded/)).toBeNull();
+    });
+});

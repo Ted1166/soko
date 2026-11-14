@@ -12,7 +12,10 @@ import type { CallOptions, ChainEvent, MarketChain } from "../types.js";
 import { extractEvents, failureMessage, logsFromOutcome } from "./events.js";
 import { nearFromYocto } from "./gas.js";
 import type { KeyStore } from "./keystone.js";
-import { isConnectError, isNetworkError, withRetry } from "./retry.js";
+import { isConnectError, isRateLimit, isRetryable, withRetry } from "./retry.js";
+
+const CACHED_VIEWS = new Set(["get_catalog", "get_listings"]);
+const VIEW_CACHE_MS = 2_000;
 
 function amount(value: string | number): `${number}` {
     return String(value) as `${number}`;
@@ -21,6 +24,7 @@ function amount(value: string | number): `${number}` {
 export class NearChain implements MarketChain {
     private readonly providers: JsonRpcProvider[];
     private providerIndex = 0;
+    private readonly viewCache = new Map<string, { at: number; value: Promise<unknown> }>();
     private accounts = new Map<string, Account>();
     private readonly tails = new Map<string, Promise<unknown>>();
 
@@ -56,7 +60,22 @@ export class NearChain implements MarketChain {
         return account;
     }
 
-    async view<T>(method: string, args: Record<string, unknown> = {}): Promise<T> {
+    view<T>(method: string, args: Record<string, unknown> = {}): Promise<T> {
+        if (!CACHED_VIEWS.has(method)) {
+            return this.fetchView<T>(method, args);
+        }
+        const key = `${method}:${JSON.stringify(args)}`;
+        const hit = this.viewCache.get(key);
+        if (hit && Date.now() - hit.at < VIEW_CACHE_MS) {
+            return hit.value as Promise<T>;
+        }
+        const value = this.fetchView<T>(method, args);
+        this.viewCache.set(key, { at: Date.now(), value });
+        value.catch(() => this.viewCache.delete(key));
+        return value;
+    }
+
+    private async fetchView<T>(method: string, args: Record<string, unknown>): Promise<T> {
         const result = await withRetry(
             () =>
                 this.provider.callFunction({
@@ -64,7 +83,7 @@ export class NearChain implements MarketChain {
                     method,
                     args,
                 }),
-            { retryOn: isNetworkError, onRetry: () => this.rotate() },
+            { retryOn: isRetryable, onRetry: () => this.rotate() },
         );
         return result as unknown as T;
     }
@@ -86,7 +105,7 @@ export class NearChain implements MarketChain {
                         deposit: nearToYocto(amount(options.depositNear ?? "0")),
                         waitUntil: "EXECUTED_OPTIMISTIC",
                     }),
-                { retryOn: isConnectError, onRetry: () => this.rotate() },
+                { retryOn: (error) => isConnectError(error) || isRateLimit(error), onRetry: () => this.rotate(), delayMs: 2_000 },
             );
             const failure = failureMessage(outcome);
             if (failure) {
@@ -103,7 +122,7 @@ export class NearChain implements MarketChain {
         }
         const publicKey = KeyPair.fromString(secret as KeyPairString).getPublicKey();
         const key = await withRetry(() => this.accountFor(accountId).getAccessKey(publicKey), {
-            retryOn: isNetworkError,
+            retryOn: isRetryable,
             onRetry: () => this.rotate(),
         });
         const permission = key.permission as unknown;

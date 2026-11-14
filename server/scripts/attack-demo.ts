@@ -5,7 +5,7 @@ import type { KeyPairString } from "near-api-js";
 
 import { panicReason } from "../src/chain/events.js";
 import { KeyStore } from "../src/chain/keystone.js";
-import { isNetworkError, withRetry } from "../src/chain/retry.js";
+import { isRetryable, withRetry } from "../src/chain/retry.js";
 import { NearChain } from "../src/chain/near.js";
 import { loadConfig } from "../src/config.js";
 import { Store } from "../src/game/store.js";
@@ -37,7 +37,7 @@ function short(error: unknown): string {
 async function expectBlocked(label: string, attempt: () => Promise<unknown>): Promise<boolean> {
     try {
         await withRetry(attempt, {
-            retryOn: isNetworkError,
+            retryOn: isRetryable,
             attempts: 4,
             delayMs: 2_000,
             onRetry: () => chain.rotate(),

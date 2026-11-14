@@ -106,6 +106,13 @@ describe("compromised trader test", () => {
         expect(results.every((r) => r.outcome === "inconclusive" && r.layer === null)).toBe(true);
     });
 
+    it("does not count a rate-limited attempt as a refusal", async () => {
+        const { chain } = fakeChain(() => new Error('{"error": {"code": -429, "message": "Rate limits exceeded"}}'));
+        const steps = buildSteps({ chain, npc, catalog, listings: [], rival: null });
+        const results = await runSteps(steps, instant);
+        expect(results.every((r) => r.outcome === "inconclusive")).toBe(true);
+    });
+
     it("flags an attack that goes through", async () => {
         const { chain } = fakeChain(() => []);
         const steps = buildSteps({ chain, npc, catalog, listings: [], rival: null });

@@ -1,5 +1,5 @@
 import { panicReason } from "../chain/events.js";
-import { isNetworkError } from "../chain/retry.js";
+import { isRetryable } from "../chain/retry.js";
 import type { GoodView, ListingView, MarketChain, NpcView } from "../types.js";
 
 export type Layer = "key" | "contract";
@@ -171,13 +171,13 @@ export async function runSteps(
                     layer: null,
                     reason: "The trader ran low on gas, so this attempt does not count",
                 });
-            } else if (isNetworkError(error)) {
+            } else if (isRetryable(error)) {
                 results.push({
                     id: step.id,
                     title: step.title,
                     outcome: "inconclusive",
                     layer: null,
-                    reason: "The connection dropped before the market answered",
+                    reason: "The network was busy or dropped, so this attempt does not count",
                 });
             } else {
                 const reason = panicReason(error);
