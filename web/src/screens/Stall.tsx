@@ -12,7 +12,7 @@ const KINDS: Record<string, string> = {
 };
 
 export function Stall() {
-    const { snapshot, hire, addCoins, toggleHold } = useGame();
+    const { snapshot, hire, addCoins, toggleHold, takeBack } = useGame();
     const [hiring, setHiring] = useState(false);
     if (!snapshot || !snapshot.stall) {
         return null;
@@ -66,6 +66,7 @@ export function Stall() {
                                 personality={KINDS[npc.archetype] ?? "Trader"}
                                 onAddCoins={(amount) => addCoins(npc.account, amount)}
                                 onToggle={() => toggleHold(npc.account, npc.active)}
+                                onTakeBack={() => takeBack(npc.account, Number(npc.coins))}
                             />
                         ))}
                     </div>

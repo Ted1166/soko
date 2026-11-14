@@ -41,7 +41,7 @@ echo "== open stall"
 send "$PLAYER_ACCOUNT" open_stall '{"name":"Mama Mboga"}' '0 NEAR'
 
 echo "== spawn NPC"
-send "$PLAYER_ACCOUNT" spawn_npc "{\"name\":\"Juma\",\"persona\":\"Careful maize trader\",\"public_key\":\"$NPC_PUBLIC\",\"policy\":{\"max_trade_value\":\"100\",\"daily_cap\":\"200\",\"max_premium_bps\":1000,\"allowed_goods\":[\"maize\",\"rice\"]}}" '0.1 NEAR'
+send "$PLAYER_ACCOUNT" spawn_npc "{\"name\":\"Juma\",\"persona\":\"Careful maize trader\",\"public_key\":\"$NPC_PUBLIC\",\"policy\":{\"max_trade_value\":\"100\",\"daily_cap\":\"200\",\"max_premium_bps\":1000,\"allowed_goods\":[\"maize\",\"rice\"]}}" '0.25 NEAR'
 
 NPC_ACCOUNT="$(view get_stall "{\"owner\":\"$PLAYER_ACCOUNT\"}" | grep -o "juma-[0-9]*\.$MARKET_ACCOUNT" | head -n 1)"
 echo "NPC account: $NPC_ACCOUNT"

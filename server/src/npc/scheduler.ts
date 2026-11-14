@@ -40,6 +40,7 @@ export class Scheduler {
     private timers: NodeJS.Timeout[] = [];
     private running = new Set<string>();
     private demand = new Map<string, number>();
+    private exhausted = new Map<string, number>();
 
     constructor(private readonly deps: SchedulerDeps) { }
 
@@ -102,9 +103,14 @@ export class Scheduler {
                     log(`${signer.split(".")[0]} ${method} skipped: network hiccup`);
                     return false;
                 }
-                if (/not enough allowance/i.test(reason) && attempt < 3) {
-                    await new Promise((resolve) => setTimeout(resolve, 4_000));
-                    continue;
+                if (/not enough allowance/i.test(reason)) {
+                    if (attempt < 3) {
+                        await new Promise((resolve) => setTimeout(resolve, 4_000));
+                        continue;
+                    }
+                    this.exhausted.set(signer, Date.now() + 10 * 60_000);
+                    log(`${signer.split(".")[0]} is out of gas and will rest for ten minutes`);
+                    return false;
                 }
                 log(`${signer} ${method} blocked: ${reason}`);
                 if (owner) {
@@ -125,6 +131,9 @@ export class Scheduler {
         const snapshot = await this.snapshot();
         const stalls = new Map<string, StallView | null>();
         for (const account of accounts) {
+            if ((this.exhausted.get(account) ?? 0) > Date.now()) {
+                continue;
+            }
             const npc = await chain.view<NpcView | null>("get_npc", { account });
             if (!npc || !npc.active) {
                 continue;

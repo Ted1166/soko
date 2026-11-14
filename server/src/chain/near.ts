@@ -10,6 +10,7 @@ import type { KeyPairString } from "near-api-js";
 
 import type { CallOptions, ChainEvent, MarketChain } from "../types.js";
 import { extractEvents, failureMessage, logsFromOutcome } from "./events.js";
+import { nearFromYocto } from "./gas.js";
 import type { KeyStore } from "./keystone.js";
 import { isConnectError, isNetworkError, withRetry } from "./retry.js";
 
@@ -93,6 +94,24 @@ export class NearChain implements MarketChain {
             }
             return extractEvents(logsFromOutcome(outcome));
         });
+    }
+
+    async allowanceOf(accountId: string): Promise<number | null> {
+        const secret = this.keys.get(accountId);
+        if (!secret) {
+            return null;
+        }
+        const publicKey = KeyPair.fromString(secret as KeyPairString).getPublicKey();
+        const key = await withRetry(() => this.accountFor(accountId).getAccessKey(publicKey), {
+            retryOn: isNetworkError,
+            onRetry: () => this.rotate(),
+        });
+        const permission = key.permission as unknown;
+        if (typeof permission !== "object" || permission === null || !("FunctionCall" in permission)) {
+            return null;
+        }
+        const allowance = (permission as { FunctionCall: { allowance: string | null } }).FunctionCall.allowance;
+        return allowance === null ? null : nearFromYocto(allowance);
     }
 
     async createFundedAccount(prefix: string, fundingNear: string): Promise<string> {

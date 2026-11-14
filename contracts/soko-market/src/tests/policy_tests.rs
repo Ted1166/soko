@@ -6,7 +6,7 @@ use super::{
 };
 
 #[test]
-#[should_panic(expected = "Attach at least 0.1 NEAR")]
+#[should_panic(expected = "Attach at least 0.25 NEAR")]
 fn spawning_requires_a_gas_deposit() {
     let mut market = fresh_market();
     let owner = account("mama.testnet");
@@ -25,7 +25,7 @@ fn spawning_requires_a_gas_deposit() {
 fn spawning_requires_a_stall() {
     let mut market = fresh_market();
     let owner = account("mama.testnet");
-    act_as(&owner, 100, 0);
+    act_as(&owner, 250, 0);
     let _ = market.spawn_npc(
         "Juma".to_string(),
         "Quiet".to_string(),

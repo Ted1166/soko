@@ -71,7 +71,7 @@ impl Contract {
         let deposit = env::attached_deposit();
         require!(
             deposit >= NPC_MIN_DEPOSIT,
-            "Attach at least 0.1 NEAR to cover the NPC's gas"
+            "Attach at least 0.25 NEAR to cover the NPC's gas"
         );
         let name = name.trim().to_string();
         require!(

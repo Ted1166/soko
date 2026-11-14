@@ -4,6 +4,7 @@ import express from "express";
 import type { NextFunction, Request, Response } from "express";
 
 import { panicReason } from "../chain/events.js";
+import { tradesLeft } from "../chain/gas.js";
 import type { NearChain } from "../chain/near.js";
 import type { Config } from "../config.js";
 import type { EventHub } from "../events/hub.js";
@@ -95,6 +96,23 @@ export function createApi(deps: ApiDeps): express.Express {
         return npc;
     };
 
+    const gasCache = new Map<string, { at: number; trades: number | null }>();
+
+    const gasOf = async (account: string): Promise<number | null> => {
+        const cached = gasCache.get(account);
+        if (cached && Date.now() - cached.at < 30_000) {
+            return cached.trades;
+        }
+        let trades: number | null = null;
+        try {
+            trades = tradesLeft(await chain.allowanceOf(account));
+        } catch {
+            trades = cached?.trades ?? null;
+        }
+        gasCache.set(account, { at: Date.now(), trades });
+        return trades;
+    };
+
     app.get("/api/health", (_req, res) => {
         res.json({ ok: true, market: config.marketAccount });
     });
@@ -132,6 +150,7 @@ export function createApi(deps: ApiDeps): express.Express {
             Number(stall?.coins ?? 0) +
             worth(inventory) +
             npcs.reduce((sum, n) => sum + Number(n.coins) + worth(n.inventory), 0);
+        const gas = await Promise.all(npcs.map((n) => gasOf(n.account)));
         res.json({
             now: Date.now(),
             owner,
@@ -139,7 +158,11 @@ export function createApi(deps: ApiDeps): express.Express {
             catalog,
             listings,
             inventory,
-            npcs: npcs.map((n) => ({ ...n, archetype: store.archetypeOf(n.account) ?? "wanjiru" })),
+            npcs: npcs.map((n, index) => ({
+                ...n,
+                archetype: store.archetypeOf(n.account) ?? "wanjiru",
+                gasTrades: gas[index],
+            })),
             calls: desk.openFor(owner),
             netWorth: Math.round(netWorth),
         });
@@ -159,7 +182,7 @@ export function createApi(deps: ApiDeps): express.Express {
             owner,
             "spawn_npc",
             { name, persona, public_key: keyPair.getPublicKey().toString(), policy },
-            { depositNear: "0.1", gasTgas: 80 },
+            { depositNear: "0.25", gasTgas: 80 },
         );
         const spawned = events.find((e) => e.event === "npc_spawned");
         const account = spawned ? String(spawned.data.npc) : null;

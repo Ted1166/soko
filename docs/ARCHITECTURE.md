@@ -33,7 +33,7 @@ One contract holds all game state.
 | `events.rs` | `EVENT_JSON` logs with standard `soko` |
 | `admin.rs` | Seeding tools for the game admin |
 
-Constants live in `constants.rs`: 8 traders per stall, 20 open listings per trader, 1,000 starter coins, 0.1 NEAR minimum to spawn a trader, 0.05 NEAR gas allowance per trader key.
+Constants live in `constants.rs`: 8 traders per stall, 20 open listings per trader, 1,000 starter coins, 0.25 NEAR minimum to spawn a trader, 0.2 NEAR gas allowance per trader key.
 
 `spawn_npc` creates the sub-account `<name>-<n>.<market account>`, funds it with the attached deposit, and adds one function-call key limited to `list_goods,reprice_listing,cancel_listing,buy_goods` on the market contract.
 

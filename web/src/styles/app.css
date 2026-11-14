@@ -439,6 +439,22 @@
     color: #fff;
 }
 
+.pill-warn {
+    background: var(--kanga);
+    color: var(--mkaa);
+}
+
+.npc-retired {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border-left: 8px solid var(--hibiscus);
+    background: var(--chokaa);
+    font-size: var(--t-1);
+}
+
 .pill-off {
     background: var(--mkaa-soft);
     color: #fff;
@@ -446,7 +462,7 @@
 
 .npc-figures {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr auto;
     gap: 16px;
 }
 

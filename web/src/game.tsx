@@ -73,6 +73,7 @@ interface GameApi {
     hire: (input: { name: string; archetype: string; persona: string; coins: number }) => Promise<void>;
     addCoins: (account: string, amount: number) => Promise<void>;
     toggleHold: (account: string, active: boolean) => Promise<void>;
+    takeBack: (account: string, amount: number) => Promise<void>;
     saveLimits: (account: string, policy: Policy) => Promise<void>;
     decide: (decision: Decision) => Promise<void>;
     dismissToast: (id: number) => void;
@@ -318,6 +319,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         [token, refresh, toast],
     );
 
+    const takeBack = useCallback(
+        async (account: string, amount: number) => {
+            if (!token || amount <= 0) {
+                return;
+            }
+            await api.defund(token, account, amount);
+            toast("ok", `Took back ${amount.toLocaleString("en-US")} coins`);
+            await refresh();
+        },
+        [token, refresh, toast],
+    );
+
     const toggleHold = useCallback(
         async (account: string, active: boolean) => {
             if (!token) {
@@ -424,6 +437,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             hire,
             addCoins,
             toggleHold,
+            takeBack,
             saveLimits,
             decide,
             dismissToast,
@@ -446,6 +460,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             hire,
             addCoins,
             toggleHold,
+            takeBack,
             saveLimits,
             decide,
             dismissToast,

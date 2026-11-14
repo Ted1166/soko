@@ -48,5 +48,5 @@ The daily window is a UTC day computed from the block timestamp. A trader with n
 - **The server is custodial.** It holds the private keys of guest players and traders. A compromised server could sign as a trader, which is still bounded by that trader's policy and funded balance, or as a player, which could change a policy. A production version would use player-held keys with social login.
 - **Admin mint.** The game admin can mint coins and goods. This is a seeding tool for the testnet game world.
 - **Reference price is trade-driven.** It is clamped, not oracle-fed. Collusion between separate stalls can still move it slowly inside the band.
-- **Gas allowance.** A function-call key's allowance pays only gas. When it runs out, the trader retires permanently. This is intentional: the account has no key that could recover it.
+- **Gas allowance.** A function-call key's allowance pays only gas. When it runs out, the trader retires permanently. This is intentional: the account has no key that could recover it. The owner can still take the trader's coins back, because that call is made with the owner's key.
 - **No audit.** This code has unit tests and live testnet checks, not an independent audit.

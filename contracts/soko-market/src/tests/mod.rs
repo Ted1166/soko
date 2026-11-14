@@ -66,7 +66,7 @@ pub fn hire_npc(
     policy: Policy,
     timestamp: u64,
 ) -> AccountId {
-    act_as(owner, 100, timestamp);
+    act_as(owner, 250, timestamp);
     let _ = contract.spawn_npc(
         name.to_string(),
         "A careful trader".to_string(),

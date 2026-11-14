@@ -38,6 +38,7 @@ export interface Npc {
     coins: string;
     inventory: Held[];
     archetype: string;
+    gasTrades?: number | null;
 }
 
 export interface Stall {
