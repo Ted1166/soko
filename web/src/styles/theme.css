@@ -1,0 +1,95 @@
+:root {
+    --bahari: #0b4f5c;
+    --bahari-deep: #07323a;
+    --chokaa: #eef2ea;
+    --chokaa-dim: #dfe6d9;
+    --kanga: #f2a93b;
+    --kanga-deep: #c98412;
+    --hibiscus: #cf2a4a;
+    --mchele: #2e8b57;
+    --mkaa: #1d2426;
+    --mkaa-soft: #4b5658;
+
+    --display: "Bowlby One", "Arial Black", system-ui, sans-serif;
+    --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    --t-1: 0.8125rem;
+    --t0: 1rem;
+    --t1: 1.25rem;
+    --t2: 1.5625rem;
+    --t3: 1.953rem;
+
+    --gap: 16px;
+    --radius: 10px;
+    --frame: 520px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--body);
+    font-size: var(--t0);
+    line-height: 1.5;
+    color: var(--mkaa);
+    background-color: var(--bahari);
+    background-image:
+        linear-gradient(135deg, var(--bahari-deep) 25%, transparent 25%),
+        linear-gradient(225deg, var(--bahari-deep) 25%, transparent 25%);
+    background-size: 48px 48px;
+    background-position: 0 0, 0 0;
+}
+
+button,
+input {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+:focus-visible {
+    outline: 3px solid var(--hibiscus);
+    outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+ul,
+ol {
+    margin: 0;
+}
+
+ul,
+ol {
+    padding: 0;
+    list-style: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}

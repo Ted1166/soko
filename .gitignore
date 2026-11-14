@@ -1,0 +1,10 @@
+!.env.example
+*.pem
+.DS_Store
+.data/
+.env
+.env.*
+.near-credentials/
+dist/
+node_modules/
+target/
